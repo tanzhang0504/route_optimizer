@@ -1,4 +1,4 @@
-set.seed(8)
+set.seed(5000)
 
 #./Rscript fun.R fairness_mode scheduling_mode f_conflict_graph_in f_throughput_in f_routes_out
 
@@ -106,10 +106,10 @@ data.in[which(data.in<0)] <- 0 # -1 may represent missing data
 station.channel.in <- data.matrix(read.table(station.channel.file))
 n.bs <- ncol(data.in)
 n.car <- nrow(data.in)
-colnames(data.in) <- paste0("bs",1:n.bs)
-rownames(data.in) <- paste0("client",1:n.car)
-station.channel <- paste0("channel",station.channel.in[,2])
-names(station.channel) <- paste0("bs", station.channel.in[,1])
+colnames(data.in) <- paste("bs",1:n.bs,sep="")
+rownames(data.in) <- paste("client",1:n.car,sep="")
+station.channel <- paste("channel",station.channel.in[,2],sep="")
+names(station.channel) <- paste("bs", station.channel.in[,1],sep="")
 
 if(!identical(names(station.channel), colnames(data.in)))stop("base stations in two files don't match!")
 
@@ -179,9 +179,11 @@ if(sche.param==1){ #optimizer
 # even thruput
 ##################################
 if(fairness.param==0){
-
+max.cn.idx <- apply(mat.channel,1,function(i)which.max(i)[1])
 res.even <- optim(par=as.vector(initiate.assign[,1:(n.channel-1)]), 
-									optf.gen, mm=mat.channel, lower=0, upper=1,
+# use max as start point?
+#res.even <- optim(par=v.to.matv(max.cn.idx, n.car, n.channel), 
+	optf.gen, mm=mat.channel, lower=0, upper=1,
 									method="L-BFGS-B")
 v.res.even <- res.even$par
 even.cn.idx <- matv.to.v(res.even$par, n.car, n.channel)
