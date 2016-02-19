@@ -1,4 +1,4 @@
-set.seed(5000)
+#set.seed(5000)
 
 #./Rscript fun.R fairness_mode scheduling_mode f_conflict_graph_in f_throughput_in f_routes_out
 
@@ -42,10 +42,16 @@ optf.gen <- function(mm, param){
 # e.g. v should be r1c1, r2c1, r3c1, .. , r1c2, r2c2 ,... 
   nc <- ncol(mm)
   p1 <- matrix(param,ncol=nc-1)
-  p2.0 <- cbind(p1, 1-rowSums(p1))
-	#p2 <- p2.0
-	p2 <- matrix(0, ncol=nc, nrow=nrow(p2.0))
-	for(i in 1:nrow(p2))p2[i, which.max(p2.0[i,])[1]] <- 1
+	# if row sum >1 for now need to rescale..
+	rs <- rowSums(p1)
+	rs[which(rs==0)] <- 1
+	p1.0 <- p1/rs
+  p2.0 <- cbind(p1.0, 1-rowSums(p1.0))
+  #p2.0 <- cbind(p1, 1-rowSums(p1))
+	#print(p2.0)
+	p2 <- p2.0
+	#p2 <- matrix(0, ncol=nc, nrow=nrow(p2.0))
+	#for(i in 1:nrow(p2))p2[i, which.max(p2.0[i,])[1]] <- 1
   #pen <- sum((p2-round(p2))^2)
   aa <- sapply(1:nc,function(i)p2[which(p2[,i]!=0),i] ,simplify=F)
   bb <- sapply(aa, function(i) i * (1/sum(i)),simplify=F)
@@ -54,18 +60,8 @@ optf.gen <- function(mm, param){
 }
 
 optf.inv <- function(mm, param){
-# mm is the throughput matrix, receiver by bs
-# if param is assignment matrix in vector format (binary 0 or 1),
-# omit the last column (since row sum should be 1 for all rows)
-# e.g. v should be r1c1, r2c1, r3c1, .. , r1c2, r2c2 ,... 
-  nc <- ncol(mm)
-  p1 <- matrix(param,ncol=nc-1)
-  p2.0 <- cbind(p1, 1-rowSums(p1))
-	#p2 <- p2.0
-	p2 <- matrix(0, ncol=nc, nrow=nrow(p2.0))
-	for(i in 1:nrow(p2))p2[i, which.max(p2.0[i,])[1]] <- 1
-  #pen <- sum((p2-round(p2))^2)
-  aa <- sapply(1:nc,function(i)p2[which(p2[,i]!=0),i] ,simplify=F)
+  ######## TBD
+	aa <- sapply(1:nc,function(i)p2[which(p2[,i]!=0),i] ,simplify=F)
   bb <- sapply(aa, function(i) i * (1/sum(i)),simplify=F)
   cc <- sapply(1:nc, function(i)mm[which(p2[,i]!=0),i] * bb[[i]])
   -sum(unlist(cc)) #+ lam*pen
@@ -180,10 +176,12 @@ if(sche.param==1){ #optimizer
 ##################################
 if(fairness.param==0){
 max.cn.idx <- apply(mat.channel,1,function(i)which.max(i)[1])
-res.even <- optim(par=as.vector(initiate.assign[,1:(n.channel-1)]), 
+max.cn.in.v <- v.to.matv(max.cn.idx, n.car, n.channel)
+#res.even <- optim(par=as.vector(initiate.assign[,1:(n.channel-1)]), 
 # use max as start point?
-#res.even <- optim(par=v.to.matv(max.cn.idx, n.car, n.channel), 
+res.even <- optim(par=max.cn.in.v, 
 	optf.gen, mm=mat.channel, lower=0, upper=1,
+	control=list(maxit = 20000, temp = 20, parscale=rep(10^6,length(max.cn.in.v))),
 									method="L-BFGS-B")
 v.res.even <- res.even$par
 even.cn.idx <- matv.to.v(res.even$par, n.car, n.channel)
