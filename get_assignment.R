@@ -131,7 +131,7 @@ browser()
 data.in.raw <- data.matrix(read.table(data.file))
 data.in.raw[which(data.in.raw<0)] <- 0 # -1 may represent missing data
 station.channel.in <- data.matrix(read.table(station.channel.file))
-n.bs <- ncol(data.in.raw)
+n.bs.raw <- ncol(data.in.raw)
 n.car.raw <- nrow(data.in.raw)
 colnames(data.in.raw) <- paste("bs",station.channel.in[,1],sep="")
 rownames(data.in.raw) <- paste("client",1:n.car.raw,sep="")
@@ -145,11 +145,22 @@ which.0 <- which(rowSums(data.in.raw)==0)
 data.in <- data.in.raw
 station.channel <- station.channel.raw
 if(length(which.0)>0){
-	data.in <- data.in.raw[-which.0,]
-	station.channel <- station.channel.raw[-which.0]
+	data.in <- matrix(data.in.raw[-which.0,],ncol=n.bs.raw)
 	#name.0 <- rownames(data.in.raw)[which.0]
 }
+# bs with no trafic
 n.car <- nrow(data.in)
+which.bs.0 <- which(colSums(data.in.raw)==0)
+if(length(which.bs.0)>0){
+  data.in <- matrix(data.in[,-which.bs.0],nrow=n.car)
+  station.channel <- station.channel.raw[-which.bs.0]
+}
+b.bs <- ncol(data.in)
+if(ncol(data.in)==1){
+	out.final <- rep(gsub("bs","",colnames(data.in)), n.bs.raw)
+	write.table(out.final, file=out.file, quote=F, col.names=F, row.names=F)
+	stop("only one available bs; results returned")
+	}
 ###################################
 # deal with stations within channel
 # can take the best one in the channel
