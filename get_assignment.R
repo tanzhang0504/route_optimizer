@@ -84,6 +84,7 @@ optf.inv <- function(mm, param){
 	p1.0 <- p1/rs
   p2.0 <- cbind(p1.0, 1-rowSums(p1.0))
 	p2 <- p2.0
+	#print(p2)
   #aa <- sapply(1:nc,function(i)p2[which(p2[,i]!=0),i] ,simplify=F)
 	a2 <- sapply(1:nc,function(i)mm[which(p2[,i]!=0),i] ,simplify=F)
 	a3 <- sapply(a2, function(i){
@@ -233,10 +234,13 @@ max.cn.idx <- apply(mat.channel,1,function(i)which.max(i)[1])
 max.cn.in.v <- v.to.matv(max.cn.idx, n.car, n.channel)
 #res.even <- optim(par=as.vector(initiate.assign[,1:(n.channel-1)]), 
 # use max as start point?
-res.even <- optim(par=max.cn.in.v, 
+res.even.try <- try(optim(par=max.cn.in.v, 
 	optf.gen, mm=mat.channel, lower=0, upper=1,
 	control=list(maxit = 20000, temp = 20, parscale=rep(10^6,length(max.cn.in.v))),
-									method="L-BFGS-B")
+									method="L-BFGS-B"),silent=T)
+if(class(res.even.try)!="try-error")res.even <- res.even.try
+if(class(res.even.try)=="try-error")res.even <- optim(par=max.cn.in.v,
+						  optf.gen, mm=mat.channel, lower=0, upper=1,method="L-BFGS-B")
 v.res.even <- res.even$par
 even.cn.idx <- matv.to.v(res.even$par, n.car, n.channel)
 # convert channel names back to bs names
@@ -251,10 +255,13 @@ if(fairness.param==1){
 max.cn.idx <- apply(mat.channel,1,function(i)which.max(i)[1])
 max.cn.in.v <- v.to.matv(max.cn.idx, n.car, n.channel)
 # use max as start point?
-res.inv <- optim(par=max.cn.in.v, 
+res.inv.try <- try(optim(par=max.cn.in.v, 
 	optf.inv, mm=mat.channel, lower=0, upper=1,
 	control=list(maxit = 20000, temp = 20, parscale=rep(10^6,length(max.cn.in.v))),
-									method="L-BFGS-B")
+									method="L-BFGS-B"), silent=T)
+if(class(res.inv.try)!="try-error")res.inv <- res.inv.try
+if(class(res.inv.try)=="try-error")res.inv <- optim(par=max.cn.in.v,
+									optf.inv, mm=mat.channel, lower=0, upper=1,method="L-BFGS-B")
 v.res.inv <- res.inv$par
 inv.cn.idx <- matv.to.v(res.inv$par, n.car, n.channel)
 # convert channel names back to bs names
@@ -269,10 +276,13 @@ if(fairness.param==2){
 max.cn.idx <- apply(mat.channel,1,function(i)which.max(i)[1])
 max.cn.in.v <- v.to.matv(max.cn.idx, n.car, n.channel)
 # use max as start point?
-res.pro <- optim(par=max.cn.in.v, 
+res.pro.try <- try(optim(par=max.cn.in.v, 
 	optf.pro, mm=mat.channel, lower=0, upper=1,
 	control=list(maxit = 20000, temp = 20, parscale=rep(10^6,length(max.cn.in.v))),
-									method="L-BFGS-B")
+									method="L-BFGS-B"),silent=T)
+if(class(res.pro.try)!="try-error")res.pro <- res.pro.try
+if(class(res.pro.try)=="try-error")res.pro <- optim(par=max.cn.in.v, 
+				optf.pro, mm=mat.channel, lower=0, upper=1,method="L-BFGS-B")
 v.res.pro <- res.pro$par
 pro.cn.idx <- matv.to.v(res.pro$par, n.car, n.channel)
 # convert channel names back to bs names
