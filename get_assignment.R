@@ -124,21 +124,32 @@ cn.to.bs <- function(cn.name, n.car, cn.lev, cn.multi, station.channel, assign.m
 out <- as.numeric(gsub("bs","",bs.out))
 }
 
+browser()
 #############################
 # Read in data
 #############################
-data.in <- data.matrix(read.table(data.file))
-data.in[which(data.in<0)] <- 0 # -1 may represent missing data
+data.in.raw <- data.matrix(read.table(data.file))
+data.in.raw[which(data.in.raw<0)] <- 0 # -1 may represent missing data
 station.channel.in <- data.matrix(read.table(station.channel.file))
-n.bs <- ncol(data.in)
+n.bs <- ncol(data.in.raw)
+n.car.raw <- nrow(data.in.raw)
+colnames(data.in.raw) <- paste("bs",station.channel.in[,1],sep="")
+rownames(data.in.raw) <- paste("client",1:n.car.raw,sep="")
+station.channel.raw <- paste("channel",station.channel.in[,2],sep="")
+names(station.channel.raw) <- paste("bs", station.channel.in[,1],sep="")
+
+if(!identical(names(station.channel.raw), colnames(data.in.raw)))stop("base stations in two files don't match!")
+
+# client with no trafic
+which.0 <- which(rowSums(data.in.raw)==0)
+data.in <- data.in.raw
+station.channel <- station.channel.raw
+if(length(which.0)>0){
+	data.in <- data.in.raw[-which.0,]
+	station.channel <- station.channel.raw[-which.0]
+	#name.0 <- rownames(data.in.raw)[which.0]
+}
 n.car <- nrow(data.in)
-colnames(data.in) <- paste("bs",station.channel.in[,1],sep="")
-rownames(data.in) <- paste("client",1:n.car,sep="")
-station.channel <- paste("channel",station.channel.in[,2],sep="")
-names(station.channel) <- paste("bs", station.channel.in[,1],sep="")
-
-if(!identical(names(station.channel), colnames(data.in)))stop("base stations in two files don't match!")
-
 ###################################
 # deal with stations within channel
 # can take the best one in the channel
@@ -157,8 +168,8 @@ n.cn.multi <- length(cn.multi)
 # don worry about channels with single bs
 mat.single <- NULL
 if (n.cn.multi < n.channel){
-  mat.single <- data.in[,which(!station.channel%in%cn.multi)]
-  colnames(mat.single) <- station.channel[colnames(mat.single)]
+  mat.single <- matrix(data.in[,which(!station.channel%in%cn.multi)],nrow=n.car)
+  colnames(mat.single) <- station.channel[which(!station.channel%in%cn.multi)]
 }
 
 mat.multi <- NULL
@@ -315,5 +326,10 @@ out.v <- expand.out
 
 }
 
-write.table(out.v, file=out.file, quote=F, col.names=F, row.names=F)
+if(length(which.0)==0) out.final <- out.v
+if(length(which.0)>0){
+		out.final <- rep(-1,n.car.raw)
+		out.final[-which.0] <- out.v
+		}
+write.table(out.final, file=out.file, quote=F, col.names=F, row.names=F)
 
