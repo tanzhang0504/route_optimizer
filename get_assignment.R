@@ -239,10 +239,11 @@ res.even.try <- try(optim(par=max.cn.in.v,
 	control=list(maxit = 20000, temp = 20, parscale=rep(10^6,length(max.cn.in.v))),
 									method="L-BFGS-B"),silent=T)
 if(class(res.even.try)!="try-error")res.even <- res.even.try
-if(class(res.even.try)=="try-error")res.even <- optim(par=max.cn.in.v,
-						  optf.gen, mm=mat.channel, lower=0, upper=1,method="L-BFGS-B")
-v.res.even <- res.even$par
-even.cn.idx <- matv.to.v(res.even$par, n.car, n.channel)
+if(class(res.even.try)=="try-error")res.even <- try(optim(par=max.cn.in.v,
+						  optf.gen, mm=mat.channel, lower=0, upper=1,method="L-BFGS-B"))
+if(class(res.even)!="try-error")v.res.even <- res.even$par
+if(class(res.even)=="try-error")v.res.even <- max.cn.in.v # return max if error after 2 try
+even.cn.idx <- matv.to.v(v.res.even, n.car, n.channel)
 # convert channel names back to bs names
 even.cn.name <- colnames(mat.channel)[even.cn.idx]
 even.out <- cn.to.bs(even.cn.name,n.car, channel.lev, cn.multi, station.channel, assign.multi)
@@ -260,10 +261,12 @@ res.inv.try <- try(optim(par=max.cn.in.v,
 	control=list(maxit = 20000, temp = 20, parscale=rep(10^6,length(max.cn.in.v))),
 									method="L-BFGS-B"), silent=T)
 if(class(res.inv.try)!="try-error")res.inv <- res.inv.try
-if(class(res.inv.try)=="try-error")res.inv <- optim(par=max.cn.in.v,
-									optf.inv, mm=mat.channel, lower=0, upper=1,method="L-BFGS-B")
-v.res.inv <- res.inv$par
-inv.cn.idx <- matv.to.v(res.inv$par, n.car, n.channel)
+if(class(res.inv.try)=="try-error")res.inv <- try(optim(par=max.cn.in.v,
+									optf.inv, mm=mat.channel, lower=0, upper=1,method="L-BFGS-B"))
+
+if(class(res.inv)!="try-error")v.res.inv <- res.inv$par
+if(class(res.inv)=="try-error")v.res.inv <- max.cn.in.v # return max if error after 2 try
+inv.cn.idx <- matv.to.v(v.res.inv, n.car, n.channel)
 # convert channel names back to bs names
 inv.cn.name <- colnames(mat.channel)[inv.cn.idx]
 inv.out <- cn.to.bs(inv.cn.name,n.car, channel.lev, cn.multi, station.channel, assign.multi)
@@ -281,10 +284,11 @@ res.pro.try <- try(optim(par=max.cn.in.v,
 	control=list(maxit = 20000, temp = 20, parscale=rep(10^6,length(max.cn.in.v))),
 									method="L-BFGS-B"),silent=T)
 if(class(res.pro.try)!="try-error")res.pro <- res.pro.try
-if(class(res.pro.try)=="try-error")res.pro <- optim(par=max.cn.in.v, 
-				optf.pro, mm=mat.channel, lower=0, upper=1,method="L-BFGS-B")
-v.res.pro <- res.pro$par
-pro.cn.idx <- matv.to.v(res.pro$par, n.car, n.channel)
+if(class(res.pro.try)=="try-error")res.pro <- try(optim(par=max.cn.in.v, 
+				optf.pro, mm=mat.channel, lower=0, upper=1,method="L-BFGS-B"))
+if(class(res.pro)!="try-error")v.res.pro <- res.pro$par
+if(class(res.pro)=="try-error")v.res.pro <- max.cn.in.v # return max if error after 2 try
+pro.cn.idx <- matv.to.v(v.res.pro, n.car, n.channel)
 # convert channel names back to bs names
 pro.cn.name <- colnames(mat.channel)[pro.cn.idx]
 pro.out <- cn.to.bs(pro.cn.name,n.car, channel.lev, cn.multi, station.channel, assign.multi)
